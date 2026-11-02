@@ -1,12 +1,17 @@
-import { Link } from 'react-router-dom'
+import { Link, Navigate } from 'react-router-dom'
+import { buildCallPlan } from '../call/plan'
 import { ButtonLink } from '../components/Button'
 import { Avatar } from '../components/Avatar'
 import { Icon } from '../components/Icon'
 import { TabBar } from '../components/TabBar'
 import { firebaseConfigured } from '../lib/firebase'
+import { useLearner } from '../lib/learner'
 import { today, tutor } from '../lib/profile'
 
 export function Home() {
+  const learner = useLearner()
+  if (!learner.onboarded) return <Navigate to="/placement" replace />
+  const plan = buildCallPlan(learner)
   const date = new Date().toLocaleDateString('en-GB', { weekday: 'long', day: 'numeric', month: 'long' })
   return (
     <div className="flex h-full flex-col">
@@ -30,9 +35,9 @@ export function Home() {
             <Avatar name={tutor.name} size={52} />
             <div className="flex flex-1 flex-col gap-0.5">
               <span className="text-[13px] font-semibold text-muted">Next call with {tutor.name}</span>
-              <span className="text-2xl font-extrabold tracking-tight">Today, {today.nextCall}</span>
+              <span className="text-2xl font-extrabold tracking-tight">{nextCallLabel(learner.nextCall, learner.firstCallDone)}</span>
             </div>
-            <span className="text-[13px] font-semibold text-muted">~{today.minutes} min</span>
+            <span className="text-[13px] font-semibold text-muted">~{plan.minutes} min</span>
           </div>
           <ButtonLink to="/call" aria-disabled={!firebaseConfigured}>
             <Icon name="phone" size={22} />
@@ -41,13 +46,17 @@ export function Home() {
         </section>
 
         <section className="flex flex-col gap-2.5 rounded-[28px] border-[1.5px] border-line p-5">
-          <span className="text-[13px] font-bold tracking-wider text-muted uppercase">Today's focus</span>
-          <h2 className="m-0 text-xl leading-tight font-extrabold">{today.focusTitle}</h2>
-          <p className="m-0 text-[15px] leading-normal text-muted">{today.focusDetail}</p>
-          <span className="flex items-center gap-2 text-[13px] font-semibold text-muted">
-            <Icon name="book" size={18} />
-            {today.focusSource}
+          <span className="text-[13px] font-bold tracking-wider text-muted uppercase">
+            {plan.first ? 'Your first call' : "Today's focus"}
           </span>
+          <h2 className="m-0 text-xl leading-tight font-extrabold">{plan.title}</h2>
+          <p className="m-0 text-[15px] leading-normal text-muted">{plan.detail}</p>
+          {!plan.first && (
+            <span className="flex items-center gap-2 text-[13px] font-semibold text-muted">
+              <Icon name="book" size={18} />
+              {today.focusSource}
+            </span>
+          )}
         </section>
 
         <div className="grid grid-cols-2 gap-3">
@@ -56,14 +65,22 @@ export function Home() {
             <span className="text-[13px] font-semibold text-muted">mistakes to review</span>
           </Link>
           <Link to="/vocab" className="flex min-h-[76px] flex-col justify-center gap-0.5 rounded-[22px] bg-sunk px-4 py-3.5">
-            <span className="text-2xl font-extrabold">—</span>
-            <span className="text-[13px] font-semibold text-muted">words due</span>
+            <span className="text-2xl font-extrabold">{learner.vocab.length || '—'}</span>
+            <span className="text-[13px] font-semibold text-muted">words to learn</span>
           </Link>
         </div>
       </main>
       <TabBar />
     </div>
   )
+}
+
+function nextCallLabel(at: number | undefined, firstCallDone: boolean) {
+  if (at && at > Date.now()) {
+    const time = new Date(at).toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' })
+    return `${new Date(at).toDateString() === new Date().toDateString() ? 'Today' : 'Tomorrow'}, ${time}`
+  }
+  return firstCallDone ? `Today, ${today.nextCall}` : 'Ready when you are'
 }
 
 function greeting() {

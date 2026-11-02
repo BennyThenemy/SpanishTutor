@@ -4,7 +4,8 @@ A PWA that feels like a phone call with a patient Spanish tutor. Lucía talks wi
 Gemini Live API (via Firebase AI Logic). A second, fast text model checks each phrase of what you say
 and underlines mistakes in the live transcript while you're still talking.
 
-This MVP covers **Home** and **the call**. The other tabs are placeholders.
+This MVP covers **the first lesson** (placement + first call, see `PLAN.md`), **Home**, **the call** and
+the **Vocab** list. Mistakes, Library and Settings are placeholders.
 
 ## Setup
 
@@ -27,6 +28,16 @@ and accept the certificate warning. Or deploy `dist/` to Firebase Hosting.
 `/call?demo` (dev server only) shows a mid-call transcript with marks, so you can work on the
 layout without making calls.
 
+## First lesson and learner data
+
+- `db/*.sql` is the placement content. `npm run content` turns it into `src/content/<language>.json`,
+  which ships inside the app (it uses Node's built-in `node:sqlite`, Node 22.5+).
+- `src/placement/engine.ts` — the placement rules: vocab bubbles, grammar ladder, level, results.
+- `src/lib/learner.ts` — the learner (placement progress, result, vocab list, next call). Stored on
+  this device only (localStorage) for now; Firestore later.
+- `src/call/plan.ts` — what Lucía is told: the fixed first-call plan, or the daily call.
+- Dev only: open `/?reset` to forget the learner and take the placement again.
+
 ## How a call works
 
 - `src/call/TutorCall.ts` — the call: Live session, transcript, marks, reconnects, 15-minute cap,
@@ -45,6 +56,7 @@ Models can be changed with `VITE_LIVE_MODEL` and `VITE_CHECKER_MODEL`.
 | --- | --- |
 | `npm run dev` | Dev server |
 | `npm run dev:phone` | Dev server over HTTPS on the LAN |
+| `npm run content` | Rebuild `src/content/*.json` from `db/*.sql` |
 | `npm run build` | Typecheck and production build (with service worker) |
 | `npm run icons` | Regenerate PWA icons from `public/logo.svg` |
 

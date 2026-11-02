@@ -9,14 +9,19 @@ import { CorrectionSheet } from '../components/CorrectionSheet'
 import { Icon } from '../components/Icon'
 import { LevelBars } from '../components/LevelBars'
 import { MarkSample, TranscriptBubble, typeLabel } from '../components/TranscriptBubble'
-import { MAX_CALL_MS, today, tutor } from '../lib/profile'
+import { buildCallPlan, type CallPlan } from '../call/plan'
+import { getLearner, markFirstCallDone } from '../lib/learner'
+import { MAX_CALL_MS, tutor } from '../lib/profile'
 
 const FRESH_MS = 2500
 const NEW_CHIP_MS = 6000
+/** A first call that ends sooner than this (a drop, a misdial) doesn't count: Lucía calls again with the same plan. */
+const FIRST_CALL_MIN_MS = 3 * 60_000
 
 export function Call() {
+  const [plan] = useState(() => buildCallPlan(getLearner()))
   const [call] = useState(() => {
-    const c = new TutorCall()
+    const c = new TutorCall(plan)
     // Dev only: /call?demo shows a mid-call transcript without Firebase, for layout work.
     if (import.meta.env.DEV && new URLSearchParams(location.search).has('demo')) c.loadDemo()
     return c
@@ -24,8 +29,11 @@ export function Call() {
   const snap = useSyncExternalStore(call.subscribe, call.getSnapshot)
 
   useEffect(() => () => void call.end(), [call])
+  useEffect(() => {
+    if (plan.first && snap.phase === 'ended' && snap.elapsedMs >= FIRST_CALL_MIN_MS) markFirstCallDone()
+  }, [plan, snap.phase, snap.elapsedMs])
 
-  if (snap.phase === 'idle') return <Incoming onAccept={() => void call.start()} />
+  if (snap.phase === 'idle') return <Incoming plan={plan} onAccept={() => void call.start()} />
   if (snap.phase === 'error') return <CallError message={snap.error} />
   if (snap.phase === 'ended') return <CallEnded snap={snap} />
   return <InCall call={call} snap={snap} />
@@ -33,7 +41,7 @@ export function Call() {
 
 // ── Incoming: also the user gesture that unlocks audio ──
 
-function Incoming({ onAccept }: { onAccept: () => void }) {
+function Incoming({ plan, onAccept }: { plan: CallPlan; onAccept: () => void }) {
   const navigate = useNavigate()
   return (
     <div className="pt-safe pb-safe flex h-full flex-col bg-card">
@@ -45,10 +53,10 @@ function Incoming({ onAccept }: { onAccept: () => void }) {
         </div>
         <div className="flex flex-col items-center gap-1.5">
           <h1 className="m-0 text-[38px] font-extrabold tracking-tight">{tutor.name}</h1>
-          <span className="text-base font-medium text-muted">Your daily call · about {today.minutes} min</span>
+          <span className="text-base font-medium text-muted">{plan.first ? 'Your first call' : 'Your daily call'} · about {plan.minutes} min</span>
         </div>
         <span className="inline-flex h-9 items-center rounded-full bg-bg px-4 text-sm font-semibold">
-          Today: {today.focusShort}
+          {plan.first ? 'First call' : 'Today'}: {plan.short}
         </span>
       </div>
       <div className="flex justify-between px-10 pb-6">

@@ -1,14 +1,8 @@
 /**
- * Learner profile and today's plan. Hard-coded for the MVP; later this comes from Firestore
- * (memory across sessions, schedule, uploaded books).
+ * The tutor and the daily call's plan. Hard-coded for the MVP; later this comes from Firestore
+ * (memory across sessions, schedule, uploaded books). The learner lives in ./learner.ts.
  */
 export const tutor = { name: 'Lucía', voice: 'Kore' }
-
-export const learner = {
-  level: 'B1 (intermediate)',
-  nativeLanguages: 'Hebrew and English',
-  helpLanguage: 'en' as 'en' | 'he',
-}
 
 export const today = {
   nextCall: '18:30',

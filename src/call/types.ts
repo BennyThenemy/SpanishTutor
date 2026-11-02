@@ -11,8 +11,6 @@ export interface Mark {
   phrase: string
   correction: string
   explanation: string
-  /** Same explanation in Hebrew, when the help language is Hebrew. */
-  explanationHe?: string
   /** Times this phrase has been marked across calls, including this one. */
   seen: number
   createdAt: number

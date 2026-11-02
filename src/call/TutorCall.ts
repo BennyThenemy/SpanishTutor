@@ -1,21 +1,10 @@
 import { getLiveGenerativeModel, ResponseModality, type LiveSession } from 'firebase/ai'
 import { getFirebaseAI, LIVE_MODEL, takeServerCloseReason } from '../lib/firebase'
-import { bumpSeen, learner, MAX_CALL_MS, today, tutor } from '../lib/profile'
+import { bumpSeen, MAX_CALL_MS, tutor } from '../lib/profile'
 import { MicCapture, PcmPlayer, SILENCE_CHUNK, type MicChunk } from './audio'
 import { checkSegment } from './checker'
+import type { CallPlan } from './plan'
 import type { CallSnapshot, Floor, Mark, TranscriptEntry } from './types'
-
-const systemInstruction = `You are ${tutor.name}, a warm, patient Spanish tutor from Madrid on a daily phone call
-with an adult learner. Level: ${learner.level}. Native languages: ${learner.nativeLanguages}.
-Today's focus: ${today.focusTitle} (${today.focusDetail}).
-
-How you talk:
-- Speak Spanish, at a slightly slow, clear pace. Short turns: one or two sentences, then a question back.
-- Keep a real conversation going about the learner's life; steer it so they need today's focus structure.
-- The app underlines the learner's mistakes on screen automatically. Do NOT stop to correct every error.
-  At most once every few turns, recast one important mistake naturally ("Ah, si tuvieras un mes libre…").
-- If the learner is stuck or asks in English or Hebrew, help briefly in English, then return to Spanish.
-- Never mention that you are an AI model. The call lasts about ${today.minutes} minutes.`
 
 const MIC_VOICE_RMS = 0.02
 const RETRY_WINDOW_MS = 30_000
@@ -27,6 +16,8 @@ type Listener = () => void
  * text model that marks mistakes in the learner's speech as it's transcribed.
  */
 export class TutorCall {
+  constructor(private plan: CallPlan) {}
+
   private listeners = new Set<Listener>()
   private snap: CallSnapshot = {
     phase: 'idle',
@@ -178,7 +169,6 @@ export class TutorCall {
           type: 'grammar',
           correction: 'si yo tuviera un mes libre',
           explanation: 'After si in a hypothetical, use the imperfect subjunctive. The conditional goes in the other half: iría.',
-          explanationHe: 'אחרי si במשפט היפותטי משתמשים ב־subjuntivo, לא בצורת התנאי.',
           seen: 3,
           createdAt: Date.now(),
         }),
@@ -191,7 +181,7 @@ export class TutorCall {
   private async connect() {
     const model = getLiveGenerativeModel(getFirebaseAI(), {
       model: LIVE_MODEL,
-      systemInstruction,
+      systemInstruction: this.plan.systemInstruction,
       generationConfig: {
         responseModalities: [ResponseModality.AUDIO],
         speechConfig: { voiceConfig: { prebuiltVoiceConfig: { voiceName: tutor.voice } } },
@@ -310,7 +300,7 @@ export class TutorCall {
     if (segment.trim().split(/\s+/).filter(Boolean).length < (entry.final ? 1 : 3)) return
     state.checkedTo = entry.text.length
 
-    checkSegment(entry.text, segment)
+    checkSegment(this.plan.level, entry.text, segment)
       .then((findings) => {
         const current = this.entryById(entry.id)
         if (!current) return
@@ -332,7 +322,6 @@ export class TutorCall {
             phrase: current.text.slice(at, end),
             correction: f.correction,
             explanation: f.explanation,
-            explanationHe: f.explanationHe,
             seen: bumpSeen(f.phrase),
             createdAt: Date.now(),
           })

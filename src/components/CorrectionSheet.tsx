@@ -68,11 +68,6 @@ export function CorrectionSheet({ mark, context, onClose, onHear }: CorrectionSh
       </div>
 
       <p className="m-0 text-[15px] font-medium leading-normal">{mark.explanation}</p>
-      {mark.explanationHe && (
-        <p dir="rtl" lang="he" className="m-0 text-right text-[15px] font-medium leading-normal text-muted">
-          {mark.explanationHe}
-        </p>
-      )}
 
       <div className="mt-1 grid grid-cols-2 gap-2.5">
         <Button variant="secondary" size="md" onClick={() => onHear(mark.correction)}>
