@@ -1,0 +1,157 @@
+@import '@fontsource-variable/manrope';
+@import 'tailwindcss';
+
+/*
+ * Palette: Banana Cream #F9E6A8, Banana Yellow #F2A900, Ripe Orange #CC6F00, Banana Brown #4D2A00.
+ * Other values are lighter/darker shades of these. Text on yellow is always brown.
+ */
+:root {
+  --bg: #fff9e8;
+  --card: #f9e6a8;
+  --sunk: #fdf0c8;
+  --ink: #4d2a00;
+  --muted: rgb(77 42 0 / 0.76);
+  --line: rgb(77 42 0 / 0.16);
+  --accent: #f2a900;
+  --on-accent: #4d2a00;
+  --mark: #cc6f00;
+  --strong: #4d2a00;
+  --on-strong: #f9e6a8;
+  --area: #f9e6a8;
+  --bubble-tutor: #fff9e8;
+  --bubble-me: #fbda88;
+  --bubble-me-line: transparent;
+  --scrim: rgb(77 42 0 / 0.42);
+  color-scheme: light;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #241400;
+    --card: #4d2a00;
+    --sunk: #3a2000;
+    --ink: #f9e6a8;
+    --muted: rgb(249 230 168 / 0.74);
+    --line: rgb(249 230 168 / 0.16);
+    --strong: #f9e6a8;
+    --on-strong: #4d2a00;
+    --area: #2a1700;
+    --bubble-tutor: #4d2a00;
+    --bubble-me: #160c00;
+    --bubble-me-line: rgb(242 169 0 / 0.45);
+    --scrim: rgb(0 0 0 / 0.55);
+    color-scheme: dark;
+  }
+}
+
+@theme inline {
+  --font-sans: 'Manrope Variable', 'Manrope', system-ui, sans-serif;
+  --color-bg: var(--bg);
+  --color-card: var(--card);
+  --color-sunk: var(--sunk);
+  --color-ink: var(--ink);
+  --color-muted: var(--muted);
+  --color-line: var(--line);
+  --color-accent: var(--accent);
+  --color-on-accent: var(--on-accent);
+  --color-mark: var(--mark);
+  --color-strong: var(--strong);
+  --color-on-strong: var(--on-strong);
+  --color-area: var(--area);
+  --color-bubble-tutor: var(--bubble-tutor);
+  --color-bubble-me: var(--bubble-me);
+  --color-scrim: var(--scrim);
+}
+
+html,
+body,
+#root {
+  height: 100%;
+}
+
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--ink);
+  font-family: var(--font-sans);
+  -webkit-tap-highlight-color: transparent;
+  overscroll-behavior: none;
+}
+
+/* Safe areas: notch at the top, gesture bar at the bottom. */
+.pt-safe {
+  padding-top: max(env(safe-area-inset-top), 20px);
+}
+.pb-safe {
+  padding-bottom: max(env(safe-area-inset-bottom), 16px);
+}
+
+/* Correction marks: text decoration only, so they never move or cover words. */
+.mark {
+  font: inherit;
+  color: inherit;
+  background: none;
+  border: 0;
+  padding: 0 1px;
+  margin: 0;
+  cursor: pointer;
+  display: inline;
+  border-radius: 4px;
+  text-decoration-line: underline;
+  text-decoration-color: var(--mark);
+  text-decoration-thickness: 2.5px;
+  text-underline-offset: 5px;
+  text-decoration-skip-ink: none;
+  transition:
+    background-color 1.2s ease,
+    box-shadow 1.2s ease;
+}
+.mark-grammar {
+  text-decoration-style: solid;
+}
+.mark-vocab {
+  text-decoration-style: dashed;
+}
+.mark-pronunciation {
+  text-decoration-style: dotted;
+  text-decoration-thickness: 3px;
+}
+.mark-new,
+.mark-open {
+  background: rgb(204 111 0 / 0.2);
+  box-shadow: 0 0 0 3px rgb(204 111 0 / 0.2);
+}
+
+.caret {
+  display: inline-block;
+  width: 2px;
+  height: 1.05em;
+  margin-left: 3px;
+  vertical-align: -0.18em;
+  border-radius: 1px;
+  background: var(--accent);
+  animation: blink 1s steps(2, start) infinite;
+}
+
+@keyframes blink {
+  to {
+    visibility: hidden;
+  }
+}
+
+@keyframes level {
+  0%,
+  100% {
+    transform: scaleY(0.4);
+  }
+  50% {
+    transform: scaleY(1);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .caret,
+  .animate-level {
+    animation: none !important;
+  }
+}

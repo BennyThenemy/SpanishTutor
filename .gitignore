@@ -1,0 +1,27 @@
+node_modules
+dist
+dev-dist
+*.local
+.env
+.env.*
+!.env.example
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+npm-debug.log*
+
+# Local databases built from db/*.sql
+*.db
+*.sqlite
+*.sqlite3
+
+# Source material for db/*.sql (kept out of the repo)
+*.pdf
+
+# Editor and Claude local settings
+.vscode/*
+!.vscode/launch.json
+.idea
+.claude/settings.local.json
