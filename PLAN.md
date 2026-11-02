@@ -40,6 +40,9 @@ changes the wording of the results (see §4).
 - **Stop rule:** fewer than 4 of 12 taps (under 30%) ends the vocab part.
 - **Result:** `vocabSection` = the last section passed (0 if section 1 was not passed).
 - **No fake words.** Taps are taken at face value.
+- **Bubbles show the Spanish word exactly as stored, with its article** ("la manzana"). **No
+  translation**, not even on tap: seeing the meaning would inflate "I know it". Translations appear
+  later, in the vocabulary list.
 - Words **not tapped**, on screens the learner actually saw, go into the learner's vocabulary list.
   Words on screens they never reached are not added.
 
@@ -91,13 +94,23 @@ Grammar gaps are **not saved** anywhere for now.
 - If the app is closed mid-test, the learner resumes on the screen they were on. Answers given so
   far are kept.
 
+**How the level is set: take the lower of the two results**
+- Vocab band = `words.difficulty` of the last section passed (sections 1–2 A1, 3–4 A2, 5 B1, 7–8 B2).
+- Grammar band = `grammar_rungs.cefr` of the highest rung passed (rungs 1–2 A1, 3–4 A2, 5–6 B1,
+  7–8 B2).
+- `level` = the **lower** of the two, so the first call is never pitched too high. Lucía can move up
+  during the call once she hears the learner speak.
+- Path 2 has no vocab result, so the grammar band alone sets `level`.
+- If they passed nothing (no section and no rung), `level` = A1 and the call is the "first 5
+  phrases" version (§6).
+
 ## 5. What Lucía receives
 
 | Field | From |
 |---|---|
 | `path` | Q1 |
 | `platform` | Q2 |
-| `knownWords` | the words tapped in §2 |
+| `knownWords` | Path 1: the words tapped in §2. Path 2: every `kind = 'word'` row whose `difficulty` is at or below `level` (e.g. B1 → sections 1–5) |
 | `vocabSection` / vocab band | §2 |
 | `grammarRung` | §3 |
 | `level` (CEFR, internal) | §2 + §3 |
@@ -105,9 +118,15 @@ Grammar gaps are **not saved** anywhere for now.
 
 ## 6. First call (~10 min, the same plan for everyone)
 
-**Language mix depends on level, with fixed ratios.** At A1 Lucía speaks mostly English and slips in
-Spanish words the learner knows. At higher levels she shifts toward Spanish, and B1+ is all Spanish,
-with English help only when the learner is stuck. A true beginner (who passed no vocab section)
+**Language mix depends on level, with fixed ratios.** The percentages are a guide. Lucía's
+instructions describe the behavior.
+
+| Level | English / Spanish | Behavior |
+|---|---|---|
+| A1 | 80 / 20 | Mostly English. She says their known words in Spanish and has them repeat short phrases. |
+| A2 | 50 / 50 | Questions in Spanish, repeated in English if they hesitate. Explanations in English. |
+| B1, B2 | 0 / 100 | Spanish only. English only when the learner says they're lost. |
+ A true beginner (who passed no vocab section)
 still gets the call, mostly in English, framed as "your first 5 Spanish phrases".
 
 | # | Step | ~min |
@@ -138,9 +157,16 @@ changes.
 - Every table has a `language` column (ISO 639-1, e.g. `es`). The app reads only the rows for the
   learner's target language.
 - Prompts use `___` for the blank. Options are stored in display order with one `is_correct`.
-- The ladder's length and the speaking-path start rung come from the data, so another language can
+- The ladder's length, the speaking-path start rung and each rung's CEFR band come from the data, so another language can
   have a different number of rungs.
 - Translations and rung topics are in English, the only help language for now.
+
+**Where it lives at runtime**
+- **For now: local.** A build script turns `db/*.sql` into one JSON file per language (e.g.
+  `es.json`), which ships inside the app. The learner's placement results, level and vocabulary list
+  are stored on the device.
+- **Later: Firestore**, for both the content and each learner's data. The table layout above maps
+  directly to Firestore collections, so the move doesn't change the data's structure.
 
 ## 8. Open questions
 
